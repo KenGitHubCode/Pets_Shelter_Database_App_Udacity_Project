@@ -18,9 +18,8 @@ package com.example.android.pets;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -28,18 +27,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.pets.data.PetContract.PetEntry;
-import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
 public class CatalogActivity extends AppCompatActivity {
 
-    // To access our database, we instantiate our subclass of SQLiteOpenHelper
-    // and pass the context, which is the current activity.
-    PetDbHelper mDbHelper = new PetDbHelper(this);
+//    // To access our database, we instantiate our subclass of SQLiteOpenHelper
+//    // and pass the context, which is the current activity.
+//    PetDbHelper mDbHelper = new PetDbHelper(this);
     public static final String LOG_TAG = CatalogActivity.class.getName();
 
     @Override
@@ -56,10 +55,10 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        PetDbHelper mDbHelper = new PetDbHelper(this);
+ //       PetDbHelper mDbHelper = new PetDbHelper(this);
 
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        displayDatabaseInfo();
+//        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+//        displayDatabaseInfo();
     }
 
     // Upon return to this activity, refresh data on screen
@@ -74,37 +73,24 @@ public class CatalogActivity extends AppCompatActivity {
      * the pets database.
      */
     private void displayDatabaseInfo() {
-
-        // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
         // Define a projection that specifies which columns from the database
         // you will actually use after this query.
         String[] projection = {
-                BaseColumns._ID,
+                PetEntry._ID,
                 PetEntry.COLUMN_PET_NAME,
                 PetEntry.COLUMN_PET_BREED,
                 PetEntry.COLUMN_PET_GENDER,
-                PetEntry.COLUMN_PET_WEIGHT
-        };
+                PetEntry.COLUMN_PET_WEIGHT };
 
-//        // Filter results WHERE "title" = 'My Title'
-//        String selection = PetEntry.COLUMN_PET_WEIGHT + " = ?";
-//        String[] selectionArgs = {">0"};
+        // Perform a query on the provider using the ContentResolver.
+        // Use the {@link PetEntry#CONTENT_URI} to access the pet data.
 
-        // How you want the results sorted in the resulting Cursor
-        String sortOrder =
-                PetEntry._ID + " DESC";
-
-        Cursor cursor = db.query(
-                PetEntry.TABLE_NAME,   // The table to query
-                projection,             // The array of columns to return (pass null to get all)
-                null,              // The columns for the WHERE clause
-                null,          // The values for the WHERE clause
-                null,                   // don't group the rows
-                null,                   // don't filter by row groups
-                sortOrder               // The sort order
-        );
+        Cursor cursor = getContentResolver().query(
+                PetEntry.CONTENT_URI,   // The content URI of the words table
+                projection,             // The columns to return for each row
+                null,                   // Selection criteria
+                null,                   // Selection criteria
+                null);                  // The sort order for the returned rows
 
         TextView displayView = (TextView) findViewById(R.id.text_view_pet);
 
@@ -121,8 +107,7 @@ public class CatalogActivity extends AppCompatActivity {
                     PetEntry.COLUMN_PET_NAME + " - " +
                     PetEntry.COLUMN_PET_BREED + " - " +
                     PetEntry.COLUMN_PET_GENDER + " - " +
-                    PetEntry.COLUMN_PET_WEIGHT + "\n"
-            );
+                    PetEntry.COLUMN_PET_WEIGHT + "\n");
 
             // Figure out the index of each column
             int idColumnIndex = cursor.getColumnIndex(PetEntry._ID);
@@ -140,19 +125,20 @@ public class CatalogActivity extends AppCompatActivity {
                 String currentBreed = cursor.getString(breedColumnIndex);
                 int currentGender = cursor.getInt(genderColumnIndex);
                 int currentWeight = cursor.getInt(weightColumnIndex);
-
                 // Display the values from each column of the current row in the cursor in the TextView
                 displayView.append(("\n" + currentID + " - " +
                         currentName + " - " +
                         currentBreed + " - " +
                         currentGender + " - " +
-                        currentWeight
-                ));
+                        currentWeight));
             }
+        } catch (RuntimeException e) {
+            Toast.makeText(this, "Runtime ERROR, try adding data first" + e, Toast.LENGTH_SHORT).show();
         } finally {
             // Always close the cursor when you're done reading from it. This releases all its
             // resources and makes it invalid.
-            cursor.close();
+            if (cursor!=null)
+                cursor.close();
         }
     }
 
@@ -170,22 +156,28 @@ public class CatalogActivity extends AppCompatActivity {
      */
     private void insertPet() {
         // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+      //  SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // Create new map of values to input into the table
         ContentValues petValues = new ContentValues();
         petValues.put(PetEntry.COLUMN_PET_NAME, "Toto2");
         petValues.put(PetEntry.COLUMN_PET_BREED, "Terrier");
-        petValues.put(PetEntry.COLUMN_PET_GENDER, 1);
+        petValues.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
         petValues.put(PetEntry.COLUMN_PET_WEIGHT, 7);
 
         // Check if valid row returned (negative 1 is invalid)
+//
+//        Long newRowID = db.insert(PetEntry.TABLE_NAME, null, petValues);
+//        Log.e(LOG_TAG, "petValues: " + petValues);
+//        if (newRowID == -1) {
+//            Log.e(LOG_TAG, "Insert failed");
+//        }
 
-        Long newRowID = db.insert(PetEntry.TABLE_NAME, null, petValues);
-        Log.e(LOG_TAG, "petValues: " + petValues);
-        if (newRowID == -1) {
-            Log.e(LOG_TAG, "Insert failed");
-        }
+        Toast.makeText(this, "Content URI:" + PetEntry.CONTENT_URI, Toast.LENGTH_SHORT).show();
+        Log.i(LOG_TAG,"content URI is " + PetEntry.CONTENT_URI);
+        Uri uri = getContentResolver().insert(PetEntry.CONTENT_URI, petValues);
+        Toast.makeText(this, getString(R.string.action_insert_saved),  Toast.LENGTH_SHORT).show();
+
     }
 
 

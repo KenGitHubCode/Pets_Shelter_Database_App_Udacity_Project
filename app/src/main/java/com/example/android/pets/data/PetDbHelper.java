@@ -29,13 +29,11 @@ public class PetDbHelper extends SQLiteOpenHelper {
 
     //constructor
     public PetDbHelper(Context context) {
-        // Public PetDbHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-
         String SQL_CREATE_ENTRIES =
                 "CREATE TABLE " + TABLE_NAME + " (" +
                         _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -48,6 +46,12 @@ public class PetDbHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_CREATE_ENTRIES);
     }
 
+    /**
+     * Upon Upgrade, deletes entries and runs onCreate again
+     * @param db
+     * @param oldVersion
+     * @param newVersion
+     */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL(SQL_DELETE_ENTRIES);

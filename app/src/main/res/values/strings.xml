@@ -17,6 +17,9 @@
     <!-- Label for overflow menu option that inserts fake pet data into the app [CHAR LIMIT=20] -->
     <string name="action_insert_dummy_data">Insert Dummy Data</string>
 
+    <string name="action_insert_saved">Pet Saved.</string>
+    <string name="editor_insert_pet_failed">Pet Add failed.</string>
+
     <!-- Label for overflow menu option that deletes all pet data in the app [CHAR LIMIT=20] -->
     <string name="action_delete_all_entries">Delete All Pets</string>
 

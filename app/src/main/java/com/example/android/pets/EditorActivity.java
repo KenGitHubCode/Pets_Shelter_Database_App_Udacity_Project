@@ -16,12 +16,11 @@
 package com.example.android.pets;
 
 import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -133,10 +132,11 @@ public class EditorActivity extends AppCompatActivity {
         String nameInput = mNameEditText.getText().toString().trim();
         String breedInput = mBreedEditText.getText().toString().trim();
         int genderInput = mGender;
-        int weightInput = Integer.parseInt(mWeightEditText.getText().toString().trim());
-
-        // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        int weightInput = 0;
+        weightInput = Integer.parseInt(mWeightEditText.getText().toString().trim());
+//
+//        // Create and/or open a database to read from it
+//        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // Create new map of values to input into the table
         ContentValues petValues = new ContentValues();
@@ -145,14 +145,20 @@ public class EditorActivity extends AppCompatActivity {
         petValues.put(PetEntry.COLUMN_PET_GENDER, genderInput);
         petValues.put(PetEntry.COLUMN_PET_WEIGHT, weightInput);
 
-        // Insert data into table, assigning to Long to error check
-        Long newRowID = db.insert(PetEntry.TABLE_NAME, null, petValues);
-        // Check if valid row returned (negative 1 is invalid)
-        if (newRowID == -1) {
-            Log.e(LOG_TAG, "Insert failed");
-            Toast.makeText(this, "Error inserting Data entry.", Toast.LENGTH_SHORT).show();
+        // Insert a new pet into the provider, returning the content URI for the new pet.
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, petValues);
+
+        // Show a toast message depending on whether or not the insertion was successful
+        if (newUri == null) {
+            // If the new content URI is null, then there was an error with insertion.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            // Otherwise, the insertion was successful and we can display a toast.
+            Toast.makeText(this, getString(R.string.action_insert_saved),
+                    Toast.LENGTH_SHORT).show();
         }
-        Toast.makeText(this, "id of newly inserted data entry is: " + newRowID, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.action_insert_saved),  Toast.LENGTH_SHORT).show();
 
     }
 
