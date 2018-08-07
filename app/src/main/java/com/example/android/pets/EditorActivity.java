@@ -134,9 +134,6 @@ public class EditorActivity extends AppCompatActivity {
         int genderInput = mGender;
         int weightInput = 0;
         weightInput = Integer.parseInt(mWeightEditText.getText().toString().trim());
-//
-//        // Create and/or open a database to read from it
-//        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // Create new map of values to input into the table
         ContentValues petValues = new ContentValues();
