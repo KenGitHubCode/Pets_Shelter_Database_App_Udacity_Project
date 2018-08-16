@@ -111,6 +111,10 @@ public class PetProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
+
+        // Set notification for cursor
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
         return cursor;
     }
 
@@ -166,6 +170,9 @@ public class PetProvider extends ContentProvider {
         } else {
             Log.i(LOG_TAG, "Pet has been inserted from PetProvider uri insertPet method with uri: " + uri);
         }
+
+        // Notificaiton for URI if changed
+        getContext().getContentResolver().notifyChange(uri, null);
 
         // Once we know the ID of the new row in the table,
         // return the new URI with the ID appended to the end of it
@@ -241,15 +248,17 @@ public class PetProvider extends ContentProvider {
 
         // Input validation not needed for BREED. Any input, including null, is accepted.
 
-        /**
-         *  Database update section
-         */
         // Get writeable database
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
         // Update the new pet with the given values
         int rowsAdded = database.update(PetContract.PetEntry.TABLE_NAME, values, selection, selectionArgs);
-        Log.i(LOG_TAG, "Pet (s) has been update from PetProvider uri update method with uri: " + uri);
+
+        // If 1 or more rows were updated, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsAdded != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
 
         return rowsAdded;
     }
@@ -262,34 +271,47 @@ public class PetProvider extends ContentProvider {
         // Get writeable database
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
+        // Track the number of rows that were deleted
+        int rowsDeleted = 0;
+
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case PETS:
                 // Delete all rows that match the selection and selection args
-                return database.delete(PetContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = database.delete(PetContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case PET_ID:
                 // Delete a single row given by the ID in the URI
                 selection = PetContract.PetEntry._ID + "=?";
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-                return database.delete(PetContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = database.delete(PetContract.PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
+                rowsDeleted = 0;
                 throw new IllegalArgumentException("Deletion is not supported for " + uri);
         }
+
+        // If 1 or more rows were deleted, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsDeleted != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+        return rowsDeleted;
     }
 
-    /**
-     * Returns the MIME type of data for the content URI.
-     */
-    @Override
-    public String getType(Uri uri) {
-        final int match = sUriMatcher.match(uri);
-        switch (match) {
-            case PETS:
-                return PetContract.PetEntry.CONTENT_LIST_TYPE;
-            case PET_ID:
-                return PetContract.PetEntry.CONTENT_ITEM_TYPE;
-            default:
-                throw new IllegalStateException("Unknown URI " + uri + " with match " + match);
+        /**
+         * Returns the MIME type of data for the content URI.
+         */
+        @Override
+        public String getType (Uri uri){
+            final int match = sUriMatcher.match(uri);
+            switch (match) {
+                case PETS:
+                    return PetContract.PetEntry.CONTENT_LIST_TYPE;
+                case PET_ID:
+                    return PetContract.PetEntry.CONTENT_ITEM_TYPE;
+                default:
+                    throw new IllegalStateException("Unknown URI " + uri + " with match " + match);
+            }
         }
     }
-}
